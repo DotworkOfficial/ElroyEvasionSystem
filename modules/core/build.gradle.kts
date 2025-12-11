@@ -10,5 +10,9 @@ dependencies {
     compileOnly(framework.command)
     compileOnly(framework.database)
 
+    compileOnly(libs.modelengine)
+    compileOnly(libs.placeholderapi)
+    compileOnly(files("${rootProject.projectDir}/libs/ElroyLib-dist.jar"))
+
     api(project(":modules:api"))
 }

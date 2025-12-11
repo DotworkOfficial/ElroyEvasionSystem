@@ -28,6 +28,8 @@ dependencyResolutionManagement {
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://jitpack.io")
         maven("https://nexus.phoenixdevt.fr/repository/maven-public/")
+        maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+        maven("https://mvn.lumine.io/repository/maven-public/")
         mavenCentral()
     }
 
@@ -35,6 +37,8 @@ dependencyResolutionManagement {
         create("libs") {
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
             library("paper-api", "io.papermc.paper:paper-api:${getProperty("spigotVersion")}")
+            library("modelengine", "com.ticxo.modelengine:ModelEngine:R4.0.4")
+            library("placeholderapi", "me.clip:placeholderapi:2.11.5")
         }
 
         create("framework") {

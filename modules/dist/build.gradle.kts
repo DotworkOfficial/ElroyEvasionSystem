@@ -5,11 +5,11 @@ plugins {
 }
 
 bukkitResourceGenerator {
-    main = "kr.elroy."
-    name = ""
+    main = "kr.elroy.evasion.ElroyEvasionSystem"
+    name = "ElroyEvasionSystem"
     apiVersion = "1.20"
     libraries = excludedRuntimeDependencies()
-    depend = listOf("HQFramework")
+    depend = listOf("HQFramework", "ElroyLib", "ModelEngine", "PlaceholderAPI")
 }
 
 dependencies {
