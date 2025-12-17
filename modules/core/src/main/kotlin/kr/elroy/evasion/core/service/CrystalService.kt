@@ -75,7 +75,7 @@ class CrystalService(
     suspend fun tryCollectCrystal(player: Player, modelId: UUID): Int {
         val crystalId = crystalIdByModelIdMap[modelId] ?: return -1
 
-        if (player.isOp) {
+        if (player.isOp && Settings.DEBUG) {
             player.sendColorizedMessage("&7[DEBUG] $crystalId 크리스탈 수집 시도")
             return -1
         }
@@ -134,7 +134,7 @@ class CrystalService(
 
         withContext(Dispatchers.BukkitMain) {
             crystalIdByModelIdMap.forEach { (modelId, crystalId) ->
-                if (collectedCrystalIds.contains(crystalId)) {
+                if (collectedCrystalIds.contains(crystalId) && (!player.isOp || !Settings.DEBUG)) {
                     modelEngineHook.hideModelForPlayer(player, modelId)
                 } else {
                     modelEngineHook.showModelForPlayer(player, modelId)

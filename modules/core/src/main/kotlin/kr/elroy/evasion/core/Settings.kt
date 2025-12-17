@@ -22,4 +22,6 @@ object Settings {
 
     val CLUSTER_ID get() = yaml.findString("ClusterId")!!
     val CRYSTAL_MODEL_ID get() = yaml.findString("CrystalModelId")!!
+    val CRYSTALS_PER_DASH get() = yaml.findInt("CrystalsPerDash") ?: 3
+    val DEBUG get() = yaml.findBoolean("Debug") ?: false
 }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kr.elroy.evasion.core.Settings.CRYSTALS_PER_DASH
 import kr.elroy.evasion.core.domain.EvasionUser
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
@@ -72,7 +73,7 @@ class EvasionService(
     @Suppress("DEPRECATION")
     fun executeEvasion(player: Player) {
         if (disabledPlayers.contains(player.uniqueId)) {
-            player.sendActionBar("&c회피기가 비활성화 되어있습니다.".colorize())
+            player.sendActionBar("&c대쉬가 비활성화 되어있습니다.".colorize())
             return
         }
 
@@ -81,7 +82,7 @@ class EvasionService(
         }
 
         addAvailableEvasionCount(player, -1)
-        player.sendActionBar("&f驾회피기 &e${getAvailableEvasionCount(player)} &7/ &e${getMaxEvasionCountFromCache(player)}".colorize())
+        player.sendActionBar("&f驾대쉬 &e${getAvailableEvasionCount(player)} &7/ &e${getMaxEvasionCountFromCache(player)}".colorize())
 
         player.velocity = Vector(0.0, 0.7, 0.0)
 
@@ -115,8 +116,10 @@ class EvasionService(
         coroutineScope.launch(Dispatchers.Default) {
             delay(5000)
             addAvailableEvasionCount(player, 1)
+
+            @Suppress("DEPRECATION")
             player.sendActionBar(
-                "&f驾회피기 &e${getAvailableEvasionCount(player)} &7/ &e${
+                "&f驾대쉬 &e${getAvailableEvasionCount(player)} &7/ &e${
                     getMaxEvasionCountFromCache(
                         player
                     )
@@ -136,16 +139,16 @@ class EvasionService(
         val maxEvasionCount = getMaxEvasionCountFromCache(player)
 
         if (maxEvasionCount >= 5) {
-            player.sendColorizedMessage("&c최대 회피기 개수는 5개입니다.")
+            player.sendColorizedMessage("&c최대 대쉬 개수는 5개입니다.")
             return false
         }
 
-        if (collectedCrystalCount % 10 != 0 || collectedCrystalCount == 0) {
-            player.sendColorizedMessage("&a회피기 획득까지 ${10 - (collectedCrystalCount % 10)}개 남았습니다.")
+        if (collectedCrystalCount % CRYSTALS_PER_DASH != 0 || collectedCrystalCount == 0) {
+            player.sendColorizedMessage("&a대쉬 획득까지 ${CRYSTALS_PER_DASH - (collectedCrystalCount % CRYSTALS_PER_DASH)}개 남았습니다.")
             return false
         }
 
-        player.sendColorizedMessage("&a회피기를 획득하였습니다.")
+        player.sendColorizedMessage("&a대쉬를 획득하였습니다.")
 
         coroutineScope.launch(Dispatchers.BukkitAsync) {
             addMaxEvasionCount(player)

@@ -1,2 +1,4 @@
 ClusterId: perus
 CrystalModelId: yundo_crystal
+CrystalPerDash: 3
+Debug: false

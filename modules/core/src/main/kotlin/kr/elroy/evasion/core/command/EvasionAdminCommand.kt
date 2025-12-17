@@ -18,12 +18,12 @@ class EvasionAdminCommand(
     suspend fun createCrystal(player: Player) = crystalService.createCrystal(player)
 
     @CommandExecutor(label = "delete")
-    suspend fun deleteCrystal(sender: CommandSender, crystalId: Long) {
+    suspend fun deleteCrystal(@Suppress("unused") sender: CommandSender, crystalId: Long) {
         crystalService.deleteCrystal(crystalId)
     }
 
     @CommandExecutor(label = "set")
-    suspend fun set(sender: CommandSender, target: Player, amount: Int) {
+    suspend fun set(@Suppress("unused") sender: CommandSender, target: Player, amount: Int) {
         evasionService.setMaxEvasionCount(target, amount)
     }
 
@@ -33,16 +33,16 @@ class EvasionAdminCommand(
     }
 
     @CommandExecutor(label = "toggle")
-    fun toggle(sender: CommandSender, target: Player) {
+    fun toggle(@Suppress("unused") sender: CommandSender, target: Player) {
         if (evasionService.toggleEvasion(target)) {
-            target.sendColorizedMessage("&a회피기가 활성화되었습니다.")
+            target.sendColorizedMessage("&a대쉬가 활성화되었습니다.")
         } else {
-            target.sendColorizedMessage("&a회피기가 비활성화되었습니다.")
+            target.sendColorizedMessage("&a대쉬가 비활성화되었습니다.")
         }
     }
 
     @CommandExecutor(label = "reload")
-    fun reload(sender: CommandSender) {
+    fun reload(@Suppress("unused") sender: CommandSender) {
         Settings.reload()
     }
 }
