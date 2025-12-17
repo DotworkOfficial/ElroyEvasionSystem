@@ -6,12 +6,15 @@ import kotlinx.coroutines.withContext
 import kr.elroy.evasion.core.Settings
 import kr.elroy.evasion.core.domain.CollectedCrystal
 import kr.elroy.evasion.core.domain.Crystal
+import kr.elroy.evasion.core.domain.CrystalTable
+import kr.elroy.evasion.core.dto.CrystalDTO
 import kr.elroy.evasion.core.dto.EvasionLocation
 import kr.elroy.evasion.core.hook.ModelEngineHook
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
 import kr.hqservice.framework.global.core.component.Service
 import org.bukkit.entity.Player
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 @Service
@@ -21,6 +24,27 @@ class CrystalService(
     @Volatile
     private var isInitialized = false
     private val crystalIdByModelIdMap = mutableMapOf<UUID, Long>()
+
+    suspend fun getAllCrystal(): List<CrystalDTO> {
+        return newSuspendedTransaction {
+            Crystal.all()
+                .notForUpdate()
+                .orderBy(CrystalTable.id to SortOrder.ASC)
+                .map { CrystalDTO(it.id.value, it.location) }
+                .toList()
+        }
+    }
+
+    suspend fun getAcquiredCrystals(playerId: UUID): Set<CrystalDTO> {
+        return newSuspendedTransaction {
+            val collectedCrystalIds = CollectedCrystal.findCrystalIdsByPlayerId(playerId)
+
+            Crystal.find { CrystalTable.id inList collectedCrystalIds }
+                .notForUpdate()
+                .map { CrystalDTO(it.id.value, it.location) }
+                .toSet()
+        }
+    }
 
     suspend fun createCrystal(player: Player) {
         val location = player.location
