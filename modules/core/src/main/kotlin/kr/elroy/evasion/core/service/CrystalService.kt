@@ -1,7 +1,10 @@
 package kr.elroy.evasion.core.service
 
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kr.elroy.evasion.core.Settings
 import kr.elroy.evasion.core.domain.CollectedCrystal
@@ -10,20 +13,30 @@ import kr.elroy.evasion.core.domain.CrystalTable
 import kr.elroy.evasion.core.dto.CrystalDTO
 import kr.elroy.evasion.core.dto.EvasionLocation
 import kr.elroy.evasion.core.hook.ModelEngineHook
+import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
 import kr.hqservice.framework.global.core.component.Service
+import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
+private const val NEARBY_DETECTION_DISTANCE = 20.0
+private const val NEARBY_CHECK_INTERVAL_TICKS = 20L
+
 @Service
 class CrystalService(
     private val modelEngineHook: ModelEngineHook,
+    private val coroutineScope: CoroutineScope,
 ) {
     @Volatile
     private var isInitialized = false
     private val crystalIdByModelIdMap = mutableMapOf<UUID, Long>()
+    private val crystalLocationByModelIdMap = mutableMapOf<UUID, Location>()
+    private val notifiedCrystalsByPlayer = mutableMapOf<UUID, MutableSet<Long>>()
+    private val nearbyCheckJobByPlayer = mutableMapOf<UUID, Job>()
 
     suspend fun getAllCrystal(): List<CrystalDTO> {
         return newSuspendedTransaction {
@@ -117,11 +130,13 @@ class CrystalService(
         }
 
         crystalIdByModelIdMap.clear()
+        crystalLocationByModelIdMap.clear()
 
         crystals.forEach { crystal ->
             val location = crystal.location.toBukkitLocation()
             val modelId = modelEngineHook.spawnModel(location, Settings.CRYSTAL_MODEL_ID)
             crystalIdByModelIdMap[modelId] = crystal.id.value
+            crystalLocationByModelIdMap[modelId] = location
         }
 
         isInitialized = true
@@ -141,5 +156,52 @@ class CrystalService(
                 }
             }
         }
+    }
+
+    fun startNearbyNotification(player: Player) {
+        stopNearbyNotification(player)
+        notifiedCrystalsByPlayer[player.uniqueId] = mutableSetOf()
+
+        val job = coroutineScope.launch(Dispatchers.BukkitAsync) {
+            while (player.isOnline) {
+                checkAndNotifyNearbyCrystals(player)
+                bukkitDelay(NEARBY_CHECK_INTERVAL_TICKS)
+            }
+        }
+
+        nearbyCheckJobByPlayer[player.uniqueId] = job
+    }
+
+    fun stopNearbyNotification(player: Player) {
+        nearbyCheckJobByPlayer.remove(player.uniqueId)?.cancel()
+        notifiedCrystalsByPlayer.remove(player.uniqueId)
+    }
+
+    private suspend fun checkAndNotifyNearbyCrystals(player: Player) {
+        val playerLocation = player.location
+        val notifiedCrystals = notifiedCrystalsByPlayer[player.uniqueId] ?: return
+
+        val collectedCrystalIds = newSuspendedTransaction {
+            CollectedCrystal.findCrystalIdsByPlayerId(player.uniqueId)
+        }
+
+        crystalLocationByModelIdMap.forEach { (modelId, crystalLocation) ->
+            if (crystalLocation.world != playerLocation.world) return@forEach
+
+            val crystalId = crystalIdByModelIdMap[modelId] ?: return@forEach
+
+            if (crystalId in collectedCrystalIds) return@forEach
+            if (crystalId in notifiedCrystals) return@forEach
+
+            val distance = playerLocation.distance(crystalLocation)
+            if (distance <= NEARBY_DETECTION_DISTANCE) {
+                notifiedCrystals.add(crystalId)
+                notifyNearbyCrystal(player, crystalId, distance)
+            }
+        }
+    }
+
+    private fun notifyNearbyCrystal(player: Player, crystalId: Long, distance: Double) {
+        player.sendColorizedMessage("&f珂 &7주변에 &b대쉬 크리스탈&7이 있습니다!")
     }
 }

@@ -78,7 +78,13 @@ class EvasionService(
         }
 
         if (getAvailableEvasionCount(player) <= 0) {
-            return
+            return player.sendActionBar(
+                "&f驾대쉬 &e${getAvailableEvasionCount(player)} &7/ &e${
+                    getMaxEvasionCountFromCache(
+                        player
+                    )
+                }".colorize()
+            )
         }
 
         addAvailableEvasionCount(player, -1)

@@ -4,10 +4,12 @@ import com.destroystokyo.paper.event.player.PlayerJumpEvent
 import com.ticxo.modelengine.api.events.BaseEntityInteractEvent
 import kr.elroy.evasion.core.service.CrystalService
 import kr.elroy.evasion.core.service.EvasionService
+import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.EquipmentSlot
 
 @Listener
@@ -43,11 +45,20 @@ class PlayerListener(
     suspend fun onPlayerJoin(event: PlayerJoinEvent) {
         evasionService.loadToCache(event.player)
         crystalService.initCrystalModelsForPlayer(event.player)
+        crystalService.startNearbyNotification(event.player)
+    }
+
+    @Subscribe
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        evasionService.removeFromCache(event.player)
+        crystalService.stopNearbyNotification(event.player)
     }
 
     @Subscribe
     suspend fun onPlayerWorldChange(event: PlayerChangedWorldEvent) {
-        evasionService.removeFromCache(event.player)
+        bukkitDelay(5L)
+
         crystalService.initCrystalModelsForPlayer(event.player)
+        crystalService.startNearbyNotification(event.player)
     }
 }
